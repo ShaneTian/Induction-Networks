@@ -1,19 +1,23 @@
-## Induction-Networks
+# Induction-Networks
 
 [![issues-open](https://img.shields.io/github/issues/ShaneTian/Induction-Networks?color=success)](https://github.com/ShaneTian/Induction-Networks/issues) [![issues-closed](https://img.shields.io/github/issues-closed/ShaneTian/Induction-Networks?color=critical)](https://github.com/ShaneTian/Induction-Networks/issues?q=is%3Aissue+is%3Aclosed) [![license](https://img.shields.io/github/license/ShaneTian/Induction-Networks)](https://github.com/ShaneTian/Induction-Networks/blob/master/LICENSE)
 
 Unofficial code for [Induction Networks](https://www.aclweb.org/anthology/D19-1403/) by PaddlePaddle.
 
-## DataSet
+## Dataset
+
+Amazon Review Sentiment Classiﬁcation (ARSC). This dataset is proposed by Yu in the NAACL 2018 paper [Diverse few-shot text classiﬁcation with multiple metrics](https://www.aclweb.org/anthology/N18-1109/). The dataset is downloaded from [AI Studio Datasets](https://aistudio.baidu.com/aistudio/datasetdetail/22858).
 
 ## Usage
 ### Requirements
+
 You can use `pip install -r requirements.txt` to install the following dependent packages:
 
 - ![python-version](https://img.shields.io/badge/python-v3.7.4-blue)
 - ![numpy-version](https://img.shields.io/badge/numpy-v1.17.2-blue)
 - ![paddlepaddle-gpu-version](https://img.shields.io/badge/paddlepaddle--gpu-v1.7.0-blue)
 - ![visualdl-version](https://img.shields.io/badge/visualdl-v1.3.0-blue)
+- ![protobuf-version](https://img.shields.io/badge/protobuf-v3.6.1-blue)
 
 ### Training
 
