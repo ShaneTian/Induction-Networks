@@ -124,9 +124,10 @@ class InductionNetworks(object):
         att_score = fluid.layers.fc(input=lstm_concat, size=att_dim, num_flatten_dims=2,
                                     bias_attr=False, act="tanh")  # [-1, T, A]
         att_score = fluid.layers.fc(input=att_score, size=1, num_flatten_dims=2,
-                                    bias_attr=False, act="sigmoid")  # [-1, T, 1]
-        lstm_att = fluid.layers.elementwise_mul(att_score, lstm_concat)  # [-1, T, 2H]
-        lstm_att = fluid.layers.reduce_sum(lstm_att, dim=-2)  # [-1, 2H]
+                                    bias_attr=False)  # [-1, T, 1]
+        att_score = fluid.layers.softmax(input=att_score, axis=1)  # [-1, T, 1]
+        lstm_att = fluid.layers.elementwise_mul(lstm_concat, att_score)  # [-1, T, 2H]
+        lstm_att = fluid.layers.reduce_sum(lstm_att, dim=1)  # [-1, 2H]
         return lstm_att
     
     def induction_module(self, support_emb, N, K,
@@ -152,9 +153,8 @@ class InductionNetworks(object):
         b.stop_gradient = True
         for _ in range(induction_iters):
             d = fluid.layers.softmax(input=b, use_cudnn=True, axis=-1)  # [B, N, K]
-            d = fluid.layers.unsqueeze(d, axes=-1)  # [B, N, K, 1]
             c_hat_emb = fluid.layers.reduce_sum(
-                fluid.layers.elementwise_mul(d, support_hat_emb),
+                fluid.layers.elementwise_mul(support_hat_emb, d, axis=0),
                 dim=2,
                 keep_dim=True)  # [B, N, 1, 2H]
             c_emb = __squash(c_hat_emb)  # [B, N, 1, 2H]

@@ -20,9 +20,9 @@ def main():
     parser.add_argument("-K", default=5, type=int, help="K shot.")
     parser.add_argument("-Q", default=5, type=int,
                         help="Number of query instances per class.")
-    parser.add_argument("--train_episodes", default=10000, type=int,
+    parser.add_argument("--train_episodes", default=30000, type=int,
                         help="Number of training episodes. (train_episodes*=batch_size)")
-    parser.add_argument("--val_steps", default=100, type=int,
+    parser.add_argument("--val_steps", default=500, type=int,
                         help="Validate after x train_episodes.")
     parser.add_argument("--max_length", default=512, type=int,
                         help="Maximum length of sentences.")
@@ -114,10 +114,12 @@ def train(model, args):
         batch_size=1, places=places)
 
     # 7. Train loop
-    # For save best model
+    # Record the best model
     best_val_acc = 0
-    # Count result for each args.val_steps
-    total_sample = total_loss = total_acc = 0
+    # Record the train loss/acc by sliding window
+    loss_record, acc_record = [], []
+    loss_window = acc_window = 0  # Sum of sliding window
+    window = 50  # The size of sliding window
     for epi, train_data in zip(range(1, args.train_episodes + 1), train_reader()):
         # 7.1 Run
         (train_cur_loss, train_cur_acc, relation_BL_w_value,
@@ -126,30 +128,33 @@ def train(model, args):
             fetch_list=[loss.name, mean_acc.name,
                         relation_BL_w.name, relation_BL_b.name,
                         relation_FC_w.name])
-        total_loss += train_cur_loss[0]
-        total_acc += train_cur_acc[0]
-        total_sample += 1
-        # print(train_cur_loss, train_cur_acc)
-        # print(total_loss, total_acc, total_sample)
+        # print(train_cur_loss[0], train_cur_acc[0])
+        loss_record.append(train_cur_loss[0])
+        acc_record.append(train_cur_acc[0])
 
-        if epi % 10 == 0:
-            print("{}  [Train episode: {:5d}/{:5d}] ==> Loss: {:2.4f} Mean acc: {:2.4f}"
+        # + right - left
+        loss_window += train_cur_loss[0]
+        acc_window += train_cur_acc[0]
+        if epi - window - 1 >= 0:
+            # Ensure that the left side is in the sliding window
+            loss_window -= loss_record[epi - window - 1]
+            acc_window -= acc_record[epi - window - 1]
+
+        if epi % window == 0:
+            print("{}  [Train episode: {:5d}/{:5d}] ==> Loss: {:2.6f} Mean acc: {:2.4f}"
                   .format(str(datetime.datetime.now())[:-7], epi, args.train_episodes,
-                  total_loss / total_sample, 100 * total_acc / total_sample))
+                  loss_window / window, 100 * acc_window / window))
 
-        # 7.2 Add params histogram to VisualDL
+        # 7.2 Add metrics/params to VisualDL
+        train_loss_scalar.add_record(epi, loss_window / window)
+        train_acc_scalar.add_record(epi, acc_window / window)
         histogram1.add_record(epi, relation_BL_w_value.flatten())
         histogram2.add_record(epi, relation_BL_b_value.flatten())
         histogram3.add_record(epi, relation_FC_w_value.flatten())
 
         # 7.3 Validation
         if args.val_data_path and epi % args.val_steps == 0:            
-            # 7.3.1 Add train loss/acc to VisualDL
-            train_loss_scalar.add_record(epi, total_loss / total_sample)
-            train_acc_scalar.add_record(epi, total_acc / total_sample)
-            total_sample = total_loss = total_acc = 0
-
-            # 7.3.2 Run val once
+            # 7.3.1 Run val once
             val_acc_mean = eval(
                 exe, compiled_val_prog, val_reader, [mean_acc.name], run_type="Val")
 
@@ -159,7 +164,7 @@ def train(model, args):
             # Add val acc to VisualDL
             val_acc_scalar.add_record(epi, val_acc_mean)
 
-            # 7.3.3 Save best model
+            # 7.3.2 Save best model
             if val_acc_mean > best_val_acc:
                 best_val_acc = val_acc_mean
                 fluid.io.save_inference_model(

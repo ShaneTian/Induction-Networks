@@ -11,7 +11,7 @@ def get_token2id_dict(pretrain_path):
         pretrain_path, "token2idx.json"), "r"))
     word_vec = np.load(os.path.join(
         pretrain_path, "word_vec.npy"))
-    vocab_size, embed_size = word_vec.shape[0], word_vec.shape[1]
+    vocab_size = word_vec.shape[0]
     # Unknown, Padding
     unk_idx, pad_idx = vocab_size, vocab_size + 1
     return token2idx_dict, unk_idx, pad_idx
