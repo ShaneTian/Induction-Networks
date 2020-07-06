@@ -30,15 +30,15 @@ CUDA_VISIBLE_DEVICES=0 python3 -u train.py \
     -N 2 \
     -K 5 \
     -Q 5 \
-    --train_episodes 10000 \
-    --val_steps 200 \
+    --train_episodes 30000 \
+    --val_steps 500 \
     --max_length 512 \
     --hidden_size 128 \
     --att_dim 64 \
     --induction_iters 3 \
     --relation_size 100 \
-    -B 4 \
-    --lr 1e-3 \
+    -B 32 \
+    --lr 1e-4 \
     --use_cuda \
     --emb_path ./embedding/glove.6B.300d/ \
     --logdir ./log > ./log/run.log 2>&1 &
@@ -60,7 +60,7 @@ Inference code is `inference.py`. You only need to modify the way data is read i
 visualdl --logdir ./log/visualdl_log/ -m ./log/infer_model/
 ```
 
-**Note:** In order to visualize metrics and graph correctly, you must use `visualdl==1.3.0` and `protobuf==3.6.1`.
+**Note:** In order to visualize metrics and graph correctly, you must use `visualdl==1.3.0` and `protobuf==3.6.1`. When the latest version of VisualDL supports visualization graphs and histograms, the code may be updated.
 
 
 ## Maintainers
